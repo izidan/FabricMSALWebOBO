@@ -1,0 +1,78 @@
+@page
+@model MSALWebApp.Pages.SetupModel
+@{
+    ViewData["Title"] = "Setup & Configuration";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>This page shows the current configuration for OBO token generation.</p>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5>Azure AD Configuration</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Client ID:</strong></div>
+                <div class="col-md-9"><code>@Model.ClientId</code></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Tenant ID:</strong></div>
+                <div class="col-md-9"><code>@Model.TenantId</code></div>
+            </div>
+            <div class="row">
+                <div class="col-md-3"><strong>Client Secret:</strong></div>
+                <div class="col-md-9">
+                    @if (Model.HasClientSecret)
+                    {
+                        <span class="text-success">✓ Configured</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger">✗ Not configured</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5>OBO Token Configuration</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Source Scope:</strong></div>
+                <div class="col-md-9"><code>@Model.SourceScope</code></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Target Scope:</strong></div>
+                <div class="col-md-9"><code>@Model.TargetScope</code></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3"><strong>Project Endpoint:</strong></div>
+                <div class="col-md-9"><code>@Model.ProjectEndpoint</code></div>
+            </div>
+            <div class="row">
+                <div class="col-md-3"><strong>Agent ID:</strong></div>
+                <div class="col-md-9"><code>@Model.AgentId</code></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <h6>Setup Instructions:</h6>
+        <ol>
+            <li>The <strong>Source Scope</strong> should be the scope for your web application (App A): <code>api://@Model.ClientId/user_impersonation</code></li>
+            <li>The <strong>Target Scope</strong> should be the scope for the API you want to call (App B): <code>api://&lt;AppB-client-id&gt;/access_as_user</code></li>
+            <li>Make sure App A has API permissions to access App B with the target scope</li>
+            <li>Ensure both applications are properly registered in Azure AD</li>
+        </ol>
+    </div>
+
+    <div class="mt-3">
+        <a href="/OboToken" class="btn btn-primary">Test OBO Token Generation</a>
+        <a href="/Token" class="btn btn-secondary">View Current Token</a>
+    </div>
+</div>

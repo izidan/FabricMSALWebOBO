@@ -1,0 +1,82 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "MSAL Web App - Azure Foundry Agent Integration";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Azure Foundry Agent Integration</h1>
+    <p class="lead">Secure Microsoft authentication with On-Behalf-Of token generation</p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">🔐 Microsoft Authentication</h5>
+                <p class="card-text">Log in with your Microsoft credentials using MSAL (Microsoft Authentication Library).</p>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="text-success">✓ You are logged in as: @User.Identity.Name</p>
+                    <div class="d-grid gap-2">
+                        <a asp-page="/Chat" class="btn btn-primary">Go to Chat</a>
+                        <a asp-page="/Token" class="btn btn-info">View Tokens</a>
+                    </div>
+                }
+                else
+                {
+                    <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn" class="btn btn-primary">Sign In</a>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">🔑 On-Behalf-Of Tokens</h5>
+                <p class="card-text">Generate OBO tokens to securely access Azure services on behalf of the authenticated user.</p>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="text-success">✓ Ready to generate OBO tokens</p>
+                }
+                else
+                {
+                    <p class="text-muted">Sign in to access this feature</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">🤖 Azure Foundry Agent</h5>
+                <p class="card-text">Interact with Azure Foundry Agent using secure authentication and token management.</p>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="text-success">✓ Ready to chat with agent</p>
+                }
+                else
+                {
+                    <p class="text-muted">Sign in to access this feature</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5>Getting Started</h5>
+                <ol>
+                    <li>Click "Sign In" to authenticate with your Microsoft account</li>
+                    <li>Navigate to the "Chat with Agent" page</li>
+                    <li>Send messages to interact with the Azure Foundry Agent</li>
+                    <li>View the generated OBO tokens used for secure API calls</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,232 @@
+@page
+@model MSALWebApp.Pages.OboTokenModel
+@{
+    ViewData["Title"] = "OBO Token Generator";
+}
+
+<div class="container">
+    <h2>On-Behalf-Of Token Generator</h2>
+    <p class="lead">Generate an OBO token for a different application using your current user token.</p>
+    
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5>User Information</h5>
+                    <p><strong>Name:</strong> @User.Identity.Name</p>
+                    <p><strong>Authentication Type:</strong> @User.Identity.AuthenticationType</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <form method="post" asp-page-handler="GenerateOboToken">
+                    <div class="mb-3">
+                        <label for="userInput" class="form-label">Enter your message for the AI Agent:</label>
+                        <textarea asp-for="UserInput" class="form-control" rows="3" 
+                                  placeholder="Enter your question or request for the AI agent (e.g., 'Give me number of buildings per tenant.')"></textarea>
+                        <div class="form-text">Leave empty to use the default message.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">Generate OBO Token & Run Agent</button>
+                </form>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.AgentResponse))
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5>AI Agent Response</h5>
+                            <small>Response from the AI Agent using OBO authentication</small>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrWhiteSpace(Model.UserInput))
+                            {
+                                <p><small class="text-muted"><strong>Your Input:</strong></small></p>
+                                <div class="alert alert-light border">
+                                    <em>@Model.UserInput</em>
+                                </div>
+                            }
+                            
+                            <p><small class="text-muted"><strong>Agent Response:</strong></small></p>
+                            <div class="alert alert-info">
+                                <pre style="white-space: pre-wrap; margin-bottom: 0;">@Model.AgentResponse</pre>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-info btn-sm" onclick="copyToClipboard('agentResponse')">Copy Response</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <h6>Error:</h6>
+                        <p>@Model.ErrorMessage</p>
+                        <small class="text-muted">
+                            <strong>Common issues:</strong>
+                            <ul>
+                                <li>Target application configuration is incorrect</li>
+                                <li>API permissions not granted or admin consent missing</li>
+                                <li>Target application doesn't exist or is not accessible</li>
+                                <li>OBO flow not properly configured in Azure AD</li>
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.OboToken))
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5>OBO Token for Target Application</h5>
+                            <small>Generated using On-Behalf-Of flow</small>
+                        </div>
+                        <div class="card-body">
+                            <p><small class="text-muted">Token (first 100 characters):</small></p>
+                            <div class="alert alert-success">
+                                <code>@Model.OboToken.Substring(0, Math.Min(100, Model.OboToken.Length))...</code>
+                            </div>
+                            
+                            <p><small class="text-muted">Full OBO Token:</small></p>
+                            <textarea class="form-control" rows="6" readonly>@Model.OboToken</textarea>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-success btn-sm" onclick="copyToClipboard('oboToken')">Copy OBO Token</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.CurrentUserToken))
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Current User Token</h5>
+                            <small class="text-muted">Token for Microsoft Graph - User.Read scope</small>
+                        </div>
+                        <div class="card-body">
+                            <p><small class="text-muted">Token (first 100 characters):</small></p>
+                            <div class="alert alert-secondary">
+                                <code>@Model.CurrentUserToken.Substring(0, Math.Min(100, Model.CurrentUserToken.Length))...</code>
+                            </div>
+                            
+                            <p><small class="text-muted">Full Token:</small></p>
+                            <textarea class="form-control" rows="6" readonly>@Model.CurrentUserToken</textarea>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('currentToken')">Copy Token</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Configuration Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>To use this feature, ensure:</strong></p>
+                        <ul>
+                            <li>Update the <code>TargetScope</code> in the <code>OboToken</code> section of <code>appsettings.json</code></li>
+                            <li>The target application is registered in Azure AD and exposes the appropriate API scopes</li>
+                            <li>This application has API permissions to call the target application</li>
+                            <li>Admin consent has been granted for the required permissions</li>
+                            <li><strong>Note:</strong> The OBO service automatically uses your existing Azure AD app credentials</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <h5>Not Authenticated</h5>
+            <p>You need to <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">sign in</a> to generate OBO tokens.</p>
+        </div>
+    }
+</div>
+
+<script>
+    function copyToClipboard(contentType) {
+        var textToCopy = '';
+        var button = event.target;
+        var originalText = button.textContent;
+        var originalClass = '';
+        
+        if (contentType === 'currentToken') {
+            var textArea = document.querySelector('textarea[readonly]');
+            if (textArea) {
+                textToCopy = textArea.value;
+                originalClass = 'btn-secondary';
+            }
+        } else if (contentType === 'oboToken') {
+            var textAreas = document.querySelectorAll('textarea[readonly]');
+            if (textAreas.length >= 2) {
+                textToCopy = textAreas[1].value; // OBO token is the second textarea
+                originalClass = 'btn-success';
+            }
+        } else if (contentType === 'agentResponse') {
+            var responseElement = document.querySelector('.alert-info pre');
+            if (responseElement) {
+                textToCopy = responseElement.textContent;
+                originalClass = 'btn-info';
+            }
+        }
+        
+        if (textToCopy) {
+            navigator.clipboard.writeText(textToCopy).then(function() {
+                button.textContent = 'Copied!';
+                button.classList.remove('btn-secondary', 'btn-success', 'btn-info');
+                button.classList.add('btn-warning');
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.classList.remove('btn-warning');
+                    button.classList.add(originalClass);
+                }, 2000);
+            }).catch(function() {
+                // Fallback for older browsers
+                var tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                
+                button.textContent = 'Copied!';
+                button.classList.remove('btn-secondary', 'btn-success', 'btn-info');
+                button.classList.add('btn-warning');
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.classList.remove('btn-warning');
+                    button.classList.add(originalClass);
+                }, 2000);
+            });
+        }
+    }
+</script>
