@@ -45,7 +45,9 @@ Update the `appsettings.json` file with your Azure AD details:
     "SignedOutCallbackPath": "/signout-callback-oidc"
   },
   "OboToken": {
-    "TargetScope": "api://your-target-app-client-id/.default"
+    "SourceScope": "api://your-client-id/envision_scope",
+    "TargetScope": "https://api.fabric.microsoft.com/.default",
+    "ProjectEndpoint": "https://api.fabric.microsoft.com/v1/workspaces/your-workspace-id/aiskills/your-fabric-data-agent-id/aiassistant/openai/"
   }
 }
 ```
@@ -55,10 +57,24 @@ Update the `appsettings.json` file with your Azure AD details:
 For OBO token generation to work, ensure your Azure AD app registration has:
 
 1. **API Permissions**:
-   - `Microsoft Graph` > `User.Read` (for current user token)
-   - API permissions to the target application you want to get OBO tokens for
+
+   - `Azure Machine Learning Services` > `user_impersonation`
+   - `Azure Service Management` > `user_impersonation`
+   - `Microsoft Cognitive Services` > `user_impersonation`
+   - `Microsoft Graph` > `Directory.Read.All`
+   - `Microsoft Graph` > `email`
+   - `Microsoft Graph` > `offline_access`
+   - `Microsoft Graph` > `openid`
+   - `Microsoft Graph` > `profile`
+   - `Microsoft Graph` > `User.Read`
+   - `Power BI Service` > `Code.AccessFabric.All`
+   - `Power BI Service` > `DataAgent.Execute.All`
+   - `Power BI Service` > `DataAgent.Read.All`
+   - `Power BI Service` > `Dataset.Read.All`
+   - `Power BI Service` > `Workspace.Read.All`
 
 2. **Expose an API** (if your app will be the target for OBO):
+
    - Define scopes that other applications can request
    - Add authorized client applications
 
@@ -77,6 +93,7 @@ For OBO token generation to work, ensure your Azure AD app registration has:
 │   └── Shared/
 │       └── _Layout.cshtml       # Main layout with navigation
 ├── Services/
+│   └── FabricDataAgent .cs      # Service for calling Fabric Data Agents through the chat completion API
 │   └── OboTokenService.cs       # Service for OBO token generation
 ├── Program.cs                   # Application startup and configuration
 ├── appsettings.json            # Configuration settings
@@ -88,6 +105,7 @@ For OBO token generation to work, ensure your Azure AD app registration has:
 ### OboTokenService
 
 The `OboTokenService` handles the On-Behalf-Of flow:
+
 - **Token Exchange**: Takes a user's access token and exchanges it for an OBO token
 - **Target Application Support**: Configurable to work with different target applications
 - **Error Handling**: Comprehensive error logging and exception handling
@@ -102,16 +120,19 @@ The `OboTokenService` handles the On-Behalf-Of flow:
 ## Running the Application
 
 1. **Install dependencies**:
+
    ```bash
    dotnet restore
    ```
 
 2. **Build the project**:
+
    ```bash
    dotnet build
    ```
 
 3. **Run the application**:
+
    ```bash
    dotnet run
    ```
@@ -142,7 +163,7 @@ The `OboTokenService` handles the On-Behalf-Of flow:
 ### Common Issues
 
 1. **Authentication fails**: Check Azure AD app registration and configuration values
-2. **OBO token generation fails**: 
+2. **OBO token generation fails**:
    - Verify target application configuration in `appsettings.json`
    - Check API permissions and admin consent
    - Ensure target application exists and is properly configured
