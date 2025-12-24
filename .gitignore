@@ -3,3 +3,4 @@
 /bin
 /MSALWebApp.csproj.user
 /obj
+appsettings.*.json
